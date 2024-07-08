@@ -13,11 +13,13 @@ describe('Multiple Transaction Entry', function () {
 
     it('Multiple Transaction Entry', function () {
         cy.visit(Cypress.env('baseUrl') + '/batch-transaction/#/multiple-transaction/create');
-        entries.entries.forEach((entry, index) => {
+        // entries.entries.forEach((entry, index) => {
+            for (let index = 0; index < entries.entries.length; index++) {
+                let entry = entries.entries[index];
             // Determine Transaction Code
-            const transactionCode = entries.entries[index].Debit !== 0 ? 'GL Debit' : 'GL Credit';
+            const transactionCode = entry.Debit !== 0 ? 'GL Debit' : 'GL Credit';
             // Determine amount
-            const amount = entries.entries[index].Debit !== 0 ? entries.entries[index].Debit : entries.entries[index].Credit;
+            const amount = entry.Debit !== 0 ? entry.Debit : entry.Credit;
 
             //Select Transaction Code
             cy.get('[placeholder="Transaction Code"]').first().click();
@@ -95,6 +97,6 @@ describe('Multiple Transaction Entry', function () {
                         console.log(`Entry at index ${index} completed successfully.`);
                     }
                 });
-        });
+        };
     });
 });
