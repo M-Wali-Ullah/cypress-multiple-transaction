@@ -1,5 +1,5 @@
 const { env } = require("./env");
-const { entries } = require("./multiple-transaction-data.");
+const { entries } = require("./multiple-transaction-data");
 
 describe('Multiple Transaction Entry', function () {
     beforeEach(function () {
