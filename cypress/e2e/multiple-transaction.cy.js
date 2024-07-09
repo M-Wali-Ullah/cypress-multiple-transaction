@@ -12,7 +12,7 @@ describe('Multiple Transaction Entry', function () {
     })
 
     it('Multiple Transaction Entry', function () {
-        cy.visit(Cypress.env(`${env.baseUrl}`) + '/batch-transaction/#/multiple-transaction/create');
+        cy.visit(env.baseUrl + '/batch-transaction/#/multiple-transaction/create');
         // entries.entries.forEach((entry, index) => {
             for (let index = 0; index < entries.entries.length; index++) {
                 let entry = entries.entries[index];
@@ -44,7 +44,7 @@ describe('Multiple Transaction Entry', function () {
             cy.wait(1000);
 
             //Select GL Code
-            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').click().type('206010001');
+            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').click().type(entries.glCode);
             //Wait
             cy.wait(1000);
             cy.get('.ui-g-6 > .md-inputfield > .tabIndex').type('{downarrow}{downarrow}{enter}');

@@ -1,4 +1,6 @@
 const entries = {
+    glCode: 206010001,
+    reverceGlCode: 124000001,
     entries: [
         {
             "Serial": 1,
