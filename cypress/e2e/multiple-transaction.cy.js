@@ -12,7 +12,7 @@ describe('Multiple Transaction Entry', function () {
     })
 
     it('Multiple Transaction Entry', function () {
-        cy.visit(Cypress.env('baseUrl') + '/batch-transaction/#/multiple-transaction/create');
+        cy.visit(Cypress.env(`${env.baseUrl}`) + '/batch-transaction/#/multiple-transaction/create');
         // entries.entries.forEach((entry, index) => {
             for (let index = 0; index < entries.entries.length; index++) {
                 let entry = entries.entries[index];
