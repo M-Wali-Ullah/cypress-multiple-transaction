@@ -1,5 +1,5 @@
 const { env } = require("./env");
-const { entries } = require("./multiple-transaction-data");
+const { entries, reverseEntries } = require("./multiple-transaction-data");
 
 describe('Multiple Transaction Entry', function () {
     beforeEach(function () {
@@ -14,8 +14,8 @@ describe('Multiple Transaction Entry', function () {
     it('Multiple Transaction Entry', function () {
         cy.visit(env.baseUrl + '/batch-transaction/#/multiple-transaction/create');
         // entries.entries.forEach((entry, index) => {
-            for (let index = 0; index < entries.entries.length; index++) {
-                let entry = entries.entries[index];
+        for (let index = 0; index < entries.entries.length; index++) {
+            let entry = entries.entries[index];
             // Determine Transaction Code
             const transactionCode = entry.Debit !== 0 ? 'GL Debit' : 'GL Credit';
             // Determine amount
@@ -97,6 +97,74 @@ describe('Multiple Transaction Entry', function () {
                         console.log(`Entry at index ${index} completed successfully.`);
                     }
                 });
+
+            // if (index === 1) {
+            //     break;
+            // }
         };
+
+        reverseEntries.entries.forEach((entry, i) => {
+            let reverseEntry = reverseEntries.entries[i];
+            //reverse entry
+
+            //Account Information
+            // Determine Transaction Code
+            const reverceTransactionCode = reverseEntry.Debit !== 0 ? 'GL Debit' : 'GL Credit';
+            // Determine amount
+            const reverceAmount = reverseEntry.Debit !== 0 ? reverseEntry.Debit : reverseEntry.Credit;
+            //Select Transaction Code
+            cy.get('[placeholder="Transaction Code"]').first().click();
+            //Wait
+            cy.wait(1000);
+            cy.get('[placeholder="Transaction Code"]').first().type(reverceTransactionCode);
+            //Wait
+            cy.wait(1500);
+            cy.get('[placeholder="Transaction Code"]').first().type('{downarrow}{downarrow}{enter}');
+            //Wait
+            cy.wait(1000);
+
+            //Select Transaction Particular Code
+            cy.get('[placeholder="Transaction Particular Code"]').first().click();
+            //Wait
+            cy.wait(500);
+            cy.get('[placeholder="Transaction Particular Code"]').first().type('CASH RECEIVE');
+            //Wait
+            cy.wait(500);
+            cy.get('[placeholder="Transaction Particular Code"]').first().type('{downarrow}{downarrow}{enter}');
+            //Wait
+            cy.wait(1000);
+
+            //Select GL Code
+            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').click().type(reverseEntries.reverseGlCode);
+            //Wait
+            cy.wait(1000);
+            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').type('{downarrow}{downarrow}{enter}');
+            //Wait after inputting GL code
+            cy.wait(1000);
+
+
+            //Enter Reference Amount
+            cy.get('[formcontrolname="referenceCurrencyAmount"]').type(reverceAmount).type('{enter}');
+
+            //Narration
+            cy.get('[formcontrolname="narration"]').type('ABC');
+
+            cy.intercept('GET', `/ababil-batch-transaction/multi-transaction/unreconciled-advices?originatingBranchId=18&respondingBranchId=18`).as('add');
+            //Click Add
+            cy.get('[label="Add"]').contains('Add').click();
+
+            //wait
+            cy.wait(1000);
+            cy.wait('@add')
+                .then((interception) => {
+                    let addResponseStatus1;
+                    addResponseStatus1 = interception.response.statusCode;
+
+                    if (addResponseStatus1 >= 200 && addResponseStatus1 < 300) {
+                        cy.log(`Entry at index ${i} completed successfully.`);
+                        console.log(`Entry at index ${i} completed successfully.`);
+                    }
+                });
+        })
     });
 });
