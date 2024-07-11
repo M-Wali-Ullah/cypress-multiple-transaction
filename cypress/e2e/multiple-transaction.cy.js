@@ -1,5 +1,6 @@
 const { env } = require("./env");
-const { entries, reverseEntries } = require("./multiple-transaction-data");
+const { entries, glCode } = require("./multiple-transaction-data");
+// const { entries, glCode} = require("./multiple-transaction-data");
 
 describe('Multiple Transaction Entry', function () {
     beforeEach(function () {
@@ -12,159 +13,115 @@ describe('Multiple Transaction Entry', function () {
     })
 
     it('Multiple Transaction Entry', function () {
-        cy.visit(env.baseUrl + '/batch-transaction/#/multiple-transaction/create');
-        // entries.entries.forEach((entry, index) => {
-        for (let index = 0; index < entries.entries.length; index++) {
-            let entry = entries.entries[index];
-            // Determine Transaction Code
-            const transactionCode = entry.Debit !== 0 ? 'GL Debit' : 'GL Credit';
-            // Determine amount
-            const amount = entry.Debit !== 0 ? entry.Debit : entry.Credit;
 
-            //Select Transaction Code
+        cy.visit(env.baseUrl + '/batch-transaction/#/multiple-transaction/create');
+
+        //function for Account Information
+        function accountInformation(entryType, index, glCode) {
+            const entry = entries[`${entryType}`][index];
+            const transactionCode = entry.Debit !== 0 ? 'GL Debit' : 'GL Credit';
+            // Select Transaction Code
             cy.get('[placeholder="Transaction Code"]').first().click();
-            //Wait
             cy.wait(1000);
             cy.get('[placeholder="Transaction Code"]').first().type(transactionCode);
-            //Wait
             cy.wait(1500);
             cy.get('[placeholder="Transaction Code"]').first().type('{downarrow}{downarrow}{enter}');
-            //Wait
             cy.wait(1000);
 
-            //Select Transaction Particular Code
+            // Select Transaction Particular Code
             cy.get('[placeholder="Transaction Particular Code"]').first().click();
-            //Wait
             cy.wait(500);
             cy.get('[placeholder="Transaction Particular Code"]').first().type('CASH RECEIVE');
-            //Wait
             cy.wait(500);
             cy.get('[placeholder="Transaction Particular Code"]').first().type('{downarrow}{downarrow}{enter}');
-            //Wait
             cy.wait(1000);
 
-            //Select GL Code
-            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').click().type(entries.glCode);
-            //Wait
+            // Select GL Code
+            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').click().type(glCode);
             cy.wait(1000);
             cy.get('.ui-g-6 > .md-inputfield > .tabIndex').type('{downarrow}{downarrow}{enter}');
-            //Wait after inputting GL code
             cy.wait(1000);
+        }
 
-            //Clicking on RESPONDING Tab
+        //Function for Transaction Information
+        function transactionInformation(entryType, index) {
+            const entry = entries[`${entryType}`][index];
+            const amount = entry.Debit !== 0 ? entry.Debit : entry.Credit;
+            // Enter Reference Amount
+            cy.get('[formcontrolname="referenceCurrencyAmount"]').type(amount).type('{enter}');
+            // Enter Narration
+            cy.get('[formcontrolname="narration"]').type('ABC');
+        }
+
+
+        //Function for Click Add and Wait
+        function addAndWait(originatingBranchId, respondingBranchId, index) {
+            // Intercept the GET request
+            cy.intercept('GET', `/ababil-batch-transaction/multi-transaction/unreconciled-advices?originatingBranchId=${originatingBranchId}&respondingBranchId=${respondingBranchId}`).as('add');
+
+            // Click Add
+            cy.get('[label="Add"]').contains('Add').click();
+
+            // Wait and handle the intercepted request
+            cy.wait(1000);
+            cy.wait('@add').then((interception) => {
+                let addResponseStatus = interception.response.statusCode;
+
+                if (addResponseStatus >= 200 && addResponseStatus < 300) {
+                    cy.log(`Entry at index ${index} completed successfully.`);
+                    console.log(`Entry at index ${index} completed successfully.`);
+                }
+            });
+        }
+
+        //Function for IBTA Information
+        function ibtaInformation(entryType, index) {
+            const entry = entries[`${entryType}`][index];
+            // Clicking on RESPONDING Tab
             cy.get('.ui-clickable').contains('RESPONDING').click();
-            //Wait clicking RESPONDING Tab
+            // Wait after clicking RESPONDING Tab
             cy.wait(1000);
 
-            //Click originatingBranchId
+            // Click originatingBranchId
             cy.get('[formcontrolname="originatingBranchId"]').click();
 
-            //Writing originatingBranchId
-            cy.get(':nth-child(2) > .md-inputfield-2 > .ui-inputwrapper-filled > .ui-dropdown > .ui-dropdown-panel > .ui-dropdown-filter-container > .ui-dropdown-filter').click();
-            cy.get(':nth-child(2) > .md-inputfield-2 > .ui-inputwrapper-filled > .ui-dropdown > .ui-dropdown-panel > .ui-dropdown-filter-container > .ui-dropdown-filter').type(entries.entries[index].BranchCode).type('{downarrow}{enter}');
+            // Writing originatingBranchId
+            cy.get(':nth-child(2) > .md-inputfield-2 > .ui-inputwrapper-filled > .ui-dropdown > .ui-dropdown-panel > .ui-dropdown-filter-container > .ui-dropdown-filter')
+                .click()
+                .type(entry.BranchCode)
+                .type('{downarrow}{enter}');
 
-            //Wait clicking inputting originatingBranchId
+            // Wait after inputting originatingBranchId
             cy.wait(500);
-            //Selecting Advice Number
+
+            // Selecting Advice Number
             cy.get('.ui-g-12.ng-invalid > :nth-child(1) > :nth-child(3) > .md-inputfield-2 > .ui-inputwrapper-filled > .ui-dropdown > .ui-dropdown-label').click();
-            cy.get(':nth-child(3) > .md-inputfield-2 > .ui-inputwrapper-filled > .ui-dropdown > .ui-dropdown-panel > .ui-dropdown-filter-container > .ui-dropdown-filter').type(entries.entries[index].AdviceNumber);
-            //Wait
+            cy.get(':nth-child(3) > .md-inputfield-2 > .ui-inputwrapper-filled > .ui-dropdown > .ui-dropdown-panel > .ui-dropdown-filter-container > .ui-dropdown-filter')
+                .type(entry.AdviceNumber);
+
+            // Wait
             cy.wait(500);
             cy.get('.ui-g-12.ng-invalid > :nth-child(1) > :nth-child(3) > .md-inputfield-2').type('{downarrow}{enter}');
 
-            //Select Transaction Particular ibtaTrCode
-            cy.get('[formcontrolname="ibtaTrCode"]').click().type('{downarrow}{downarrow}{enter}')
-
-            //Enter Reference Amount
-            cy.get('[formcontrolname="referenceCurrencyAmount"]').type(amount).type('{enter}');
-
-            //Narration
-            cy.get('[formcontrolname="narration"]').type('ABC');
-
-            cy.intercept('GET', `/ababil-batch-transaction/multi-transaction/unreconciled-advices?originatingBranchId=18&respondingBranchId=18`).as('add');
-            //Click Add
-            cy.get('[label="Add"]').contains('Add').click();
-
-            //wait
-            cy.wait(1000);
-            cy.wait('@add')
-                .then((interception) => {
-                    let addResponseStatus;
-                    addResponseStatus = interception.response.statusCode;
-
-                    if (addResponseStatus >= 200 && addResponseStatus < 300) {
-                        cy.log(`Entry at index ${index} completed successfully.`);
-                        console.log(`Entry at index ${index} completed successfully.`);
-                    }
-                });
-
-            // if (index === 1) {
-            //     break;
-            // }
-        };
-
-        reverseEntries.entries.forEach((entry, i) => {
-            let reverseEntry = reverseEntries.entries[i];
-            //reverse entry
-
-            //Account Information
-            // Determine Transaction Code
-            const reverceTransactionCode = reverseEntry.Debit !== 0 ? 'GL Debit' : 'GL Credit';
-            // Determine amount
-            const reverceAmount = reverseEntry.Debit !== 0 ? reverseEntry.Debit : reverseEntry.Credit;
-            //Select Transaction Code
-            cy.get('[placeholder="Transaction Code"]').first().click();
-            //Wait
-            cy.wait(1000);
-            cy.get('[placeholder="Transaction Code"]').first().type(reverceTransactionCode);
-            //Wait
-            cy.wait(1500);
-            cy.get('[placeholder="Transaction Code"]').first().type('{downarrow}{downarrow}{enter}');
-            //Wait
-            cy.wait(1000);
-
-            //Select Transaction Particular Code
-            cy.get('[placeholder="Transaction Particular Code"]').first().click();
-            //Wait
-            cy.wait(500);
-            cy.get('[placeholder="Transaction Particular Code"]').first().type('CASH RECEIVE');
-            //Wait
-            cy.wait(500);
-            cy.get('[placeholder="Transaction Particular Code"]').first().type('{downarrow}{downarrow}{enter}');
-            //Wait
-            cy.wait(1000);
-
-            //Select GL Code
-            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').click().type(reverseEntries.reverseGlCode);
-            //Wait
-            cy.wait(1000);
-            cy.get('.ui-g-6 > .md-inputfield > .tabIndex').type('{downarrow}{downarrow}{enter}');
-            //Wait after inputting GL code
-            cy.wait(1000);
+            // Select Transaction Particular ibtaTrCode
+            cy.get('[formcontrolname="ibtaTrCode"]').click().type('{downarrow}{downarrow}{enter}');
+        }
 
 
-            //Enter Reference Amount
-            cy.get('[formcontrolname="referenceCurrencyAmount"]').type(reverceAmount).type('{enter}');
+        entries.entries.forEach((entry, index) => {
+            const entryType = 'entries';
 
-            //Narration
-            cy.get('[formcontrolname="narration"]').type('ABC');
+            accountInformation(entryType, index, glCode.glCode);
+            transactionInformation(entryType, index);
+            ibtaInformation(entryType, index)
+            addAndWait(18, 18, index);
+        });
 
-            cy.intercept('GET', `/ababil-batch-transaction/multi-transaction/unreconciled-advices?originatingBranchId=18&respondingBranchId=18`).as('add');
-            //Click Add
-            cy.get('[label="Add"]').contains('Add').click();
-
-            //wait
-            cy.wait(1000);
-            cy.wait('@add')
-                .then((interception) => {
-                    let addResponseStatus1;
-                    addResponseStatus1 = interception.response.statusCode;
-
-                    if (addResponseStatus1 >= 200 && addResponseStatus1 < 300) {
-                        cy.log(`Entry at index ${i} completed successfully.`);
-                        console.log(`Entry at index ${i} completed successfully.`);
-                    }
-                });
+        entries.reverseEntries.forEach((entry, index) => {
+            const entryType = 'reverseEntries';
+            accountInformation(entryType, index, glCode.reverseGlCode);
+            transactionInformation(entryType, index);
+            addAndWait(18, 18, index);
         })
     });
 });
